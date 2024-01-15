@@ -153,7 +153,7 @@ namespace neroll {
         }
 
      private:
-        std::unordered_map<std::string, std::shared_ptr<AstNode>> value_;
+        std::map<std::string, std::shared_ptr<AstNode>> value_;
 
      public:
         using value_type = decltype(value_);
