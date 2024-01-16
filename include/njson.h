@@ -81,11 +81,6 @@ namespace neroll {
         AstType type_;
     };
 
-    // class NumberNode : public AstNode {
-    //  public:
-    //     NumberNode() : AstNode(AstType::NUMBER) {}
-    // };
-
     class IntNode : public AstNode {
      public:
         IntNode(int64_t value) : AstNode(AstType::INT) {
@@ -148,7 +143,7 @@ namespace neroll {
             return value_.size();
         }
 
-        std::shared_ptr<AstNode> &operator[](std::string key) {
+        std::shared_ptr<AstNode> &at(std::string key) {
             return value_.at(key);
         }
 
@@ -221,6 +216,31 @@ namespace neroll {
 
         auto parse_array() -> std::shared_ptr<AstNode>;
         auto parse_object() -> std::shared_ptr<AstNode>;
+    };
+
+    class Stringifier {
+     public:
+        Stringifier(const std::shared_ptr<AstNode> &ast) : json_ast_(ast) {
+            load_config();
+        }
+
+        std::string to_html() const;
+    
+     private:
+        std::shared_ptr<AstNode> json_ast_;
+        std::shared_ptr<AstNode> config_ast_;
+
+        std::string string_color_;
+        std::string number_color_;
+        std::string brace_color_;
+        std::string bracket_color_;
+        std::string bool_color_;
+        std::string null_color_;
+
+        void load_config();
+
+        std::string to_html_traverse(const std::shared_ptr<AstNode> &root) const;
+
     };
 
 

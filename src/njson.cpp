@@ -6,6 +6,8 @@
 #include <algorithm>    // any_of
 #include <ranges>
 #include <charconv>     // from_chars
+#include <fstream>      // ifstream
+#include <sstream>      // ostringstream
 
 auto neroll::token_name(TokenType type) -> const char * {
     switch (type) {
@@ -436,7 +438,7 @@ auto neroll::Parser::parse() -> std::shared_ptr<AstNode> {
         case TokenType::LBRACKET:
             return parse_array();
         case TokenType::STRING:
-            return std::make_shared<StringNode>(current_token_.content);
+            return std::make_shared<StringNode>(current_token_.content.substr(1, current_token_.content.size() - 2));
         case TokenType::NUMBER:
             return match(current_token_);
         case TokenType::TRUE:
@@ -545,4 +547,122 @@ auto neroll::Parser::parse_object() -> std::shared_ptr<AstNode> {
 
 auto neroll::ArrayNode::operator[](std::size_t index) -> std::shared_ptr<AstNode> & {
     return value_[index];
+}
+
+void neroll::Stringifier::load_config() {
+    std::ifstream fin("config.json");
+    std::ostringstream sout;
+    sout << fin.rdbuf();
+    config_ast_ = Parser(Lexer{sout.str()}).parse();
+
+    auto object = std::static_pointer_cast<ObjectNode>(config_ast_);
+
+    auto number_node = object->at(R"(number-color)");
+    number_color_ = std::static_pointer_cast<StringNode>(number_node)->value();
+
+    auto string_node = object->at(R"(string-color)");
+    string_color_ = std::static_pointer_cast<StringNode>(string_node)->value();
+
+    auto bool_node = object->at(R"(bool-color)");
+    bool_color_ = std::static_pointer_cast<StringNode>(bool_node)->value();
+
+    auto null_node = object->at(R"(null-color)");
+    null_color_ = std::static_pointer_cast<StringNode>(null_node)->value();
+
+    auto brace_node = object->at(R"(brace-color)");
+    brace_color_ = std::static_pointer_cast<StringNode>(brace_node)->value();
+
+    auto bracket_node = object->at(R"(bracket-color)");
+    bracket_color_ = std::static_pointer_cast<StringNode>(bracket_node)->value();
+
+}
+
+std::string neroll::Stringifier::to_html_traverse(const std::shared_ptr<AstNode> &root) const {
+    switch (root->type()) {
+        case AstType::INT: {
+            auto number = std::static_pointer_cast<IntNode>(root)->value();
+            return std::format(R"(<span style="color: {}">{}</span>)", number_color_, number);
+        }
+        break;
+        case AstType::FLOAT: {
+            auto number = std::static_pointer_cast<FloatNode>(root)->value();
+            return std::format(R"(<span style="color: {}">{}</span>)", number_color_, number);
+        }
+        break;
+        case AstType::BOOLEAN: {
+            auto boolean = std::static_pointer_cast<BooleanNode>(root)->value();
+            return std::format(R"(<span style="color: {}">{}</span>)", bool_color_, boolean);
+        }
+        break;
+        case AstType::NIL: {
+            return std::format(R"(<span style="color: {}">{}</span>)", null_color_, "null");
+        }
+        break;
+        case AstType::STRING: {
+            std::string string = std::static_pointer_cast<StringNode>(root)->value();
+            return std::format(R"(<span style="color: {}">"{}"</span>)", string_color_, string);
+        }
+        break;
+        case AstType::ARRAY: {
+            auto array = std::static_pointer_cast<ArrayNode>(root);
+            std::string html = std::format(R"(<span style="color: {0}">[</span>)", bracket_color_);
+            for (std::size_t i = 0; i < array->size(); i++) {
+                if (i != 0) {
+                    html.append(", ");
+                }
+                html.append(to_html_traverse(array->operator[](i)));
+            }
+            html.append(std::format(R"(<span style="color: {}">]</span>)", bracket_color_));
+            return html;
+        }
+        break;
+        case AstType::OBJECT: {
+            auto object = std::static_pointer_cast<ObjectNode>(root);
+            std::string html = std::format(R"(<span style="color: {0}">{{</span>)", brace_color_);
+            const auto map = object->value();
+            int index = 0;
+            for (const auto &[key, value_node] : map) {
+                if (index != 0)
+                    html.append(",");
+                html.append("<br/>&nbsp;&nbsp;&nbsp;&nbsp;");
+                html.append(std::format(R"(<span style="color: {}">"{}"</span>)", string_color_, key));
+                html.append(": ");
+                html.append(to_html_traverse(value_node));
+                index++;
+            }
+            html.append(std::format(R"(<span style="color: {}"><br/>}}</span>)", brace_color_));
+            return html;
+        }
+        break;
+        default:
+            throw std::runtime_error("invalid ast node type");
+    }
+}
+
+std::string neroll::Stringifier::to_html() const {
+    std::string html = R"(
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Json</title>
+            <style>
+                .code {
+                    font-family: "Consolas"
+                }
+            </style>
+        </head>
+        <body>
+            <div class="code">
+    )";
+
+    html.append(to_html_traverse(json_ast_));
+
+    html.append(R"(
+        </div>
+    </body>
+    </html>
+    )");
+
+    return html;
 }
