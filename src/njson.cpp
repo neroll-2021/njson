@@ -577,7 +577,7 @@ void neroll::Stringifier::load_config() {
 
 }
 
-std::string neroll::Stringifier::to_html_traverse(const std::shared_ptr<AstNode> &root) const {
+std::string neroll::Stringifier::to_html_traverse(const std::shared_ptr<AstNode> &root, int layer) const {
     switch (root->type()) {
         case AstType::INT: {
             auto number = std::static_pointer_cast<IntNode>(root)->value();
@@ -610,7 +610,7 @@ std::string neroll::Stringifier::to_html_traverse(const std::shared_ptr<AstNode>
                 if (i != 0) {
                     html.append(", ");
                 }
-                html.append(to_html_traverse(array->operator[](i)));
+                html.append(to_html_traverse(array->operator[](i), layer));
             }
             html.append(std::format(R"(<span style="color: {}">]</span>)", bracket_color_));
             return html;
@@ -624,13 +624,19 @@ std::string neroll::Stringifier::to_html_traverse(const std::shared_ptr<AstNode>
             for (const auto &[key, value_node] : map) {
                 if (index != 0)
                     html.append(",");
-                html.append("<br/>&nbsp;&nbsp;&nbsp;&nbsp;");
+                html.append("<br/>");
+                for (int i = 0; i < layer; i++)
+                    html.append("&nbsp;&nbsp;&nbsp;&nbsp;");
                 html.append(std::format(R"(<span style="color: {}">"{}"</span>)", string_color_, key));
                 html.append(": ");
-                html.append(to_html_traverse(value_node));
+                html.append(to_html_traverse(value_node, layer + 1));
                 index++;
             }
-            html.append(std::format(R"(<span style="color: {}"><br/>}}</span>)", brace_color_));
+            std::string space;
+            for (int i = 0; i < layer - 1; i++) {
+                space.append("&nbsp;&nbsp;&nbsp;&nbsp;");
+            }
+            html.append(std::format(R"(<span style="color: {}"><br/>{}}}</span>)", brace_color_, space));
             return html;
         }
         break;
@@ -656,7 +662,7 @@ std::string neroll::Stringifier::to_html() const {
             <div class="code">
     )";
 
-    html.append(to_html_traverse(json_ast_));
+    html.append(to_html_traverse(json_ast_, 1));
 
     html.append(R"(
         </div>

@@ -239,29 +239,9 @@ namespace neroll {
 
         void load_config();
 
-        std::string to_html_traverse(const std::shared_ptr<AstNode> &root) const;
+        std::string to_html_traverse(const std::shared_ptr<AstNode> &root, int layer) const;
 
     };
-
-
-    // class Json {
-    //  public:
-    //     using value_type = std::variant<int64_t, double, bool,
-    //         std::map<std::string, Json>, std::vector<Json>, std::string, std::nullptr_t>;
-        
-    //     // for object
-    //     Json &operator[](std::string_view key);
-    //     const Json &operator[](std::string_view key) const;
-
-    //     // for array
-    //     Json &operator[](std::size_t index);
-    //     const Json &operator[](std::size_t index) const;
-
-    //     value_type &value();
-
-    //  private:
-    //     value_type value_;
-    // };
 
 }
 
