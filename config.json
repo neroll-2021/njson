@@ -1,0 +1,8 @@
+{
+    "number-color": "blue",
+    "string-color": "orange",
+    "bool-color": "red",
+    "null-color": "black",
+    "brace-color": "pink",
+    "bracket-color": "green"
+}

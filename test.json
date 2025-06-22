@@ -1,0 +1,17 @@
+{
+    "name": "Neroll",
+    "age": 18,
+    "hobbies": [
+        "programming",
+        "playing computer games",
+        "listening to music",
+        "watching anime"
+    ],
+    "friends": [{
+        "name": "Kate",
+        "age": 18
+    }, {
+        "name": "Mike",
+        "age": 20
+    }]
+}
