@@ -467,7 +467,8 @@ auto neroll::Parser::match(const Token &token) -> std::shared_ptr<AstNode> {
             });
             if (is_float) {
                 double value;
-                auto [ptr, errc] = std::from_chars(token.content.begin(), token.content.end(), value);
+                auto [ptr, errc] = std::from_chars(token.content.data(),
+                    token.content.data() + token.content.size(), value);
                 if (errc == std::errc::invalid_argument)
                     throw_error("invalid number", token);
                 if (errc == std::errc::result_out_of_range)
@@ -475,7 +476,8 @@ auto neroll::Parser::match(const Token &token) -> std::shared_ptr<AstNode> {
                 return std::make_shared<FloatNode>(value);
             } else {
                 int64_t value;
-                auto [ptr, errc] = std::from_chars(token.content.begin(), token.content.end(), value);
+                auto [ptr, errc] = std::from_chars(token.content.data(),
+                    token.content.data() + token.content.size(), value);
                 if (errc == std::errc::invalid_argument)
                     throw_error("invalid number", token);
                 if (errc == std::errc::result_out_of_range)
